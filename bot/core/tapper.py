@@ -106,12 +106,14 @@ class Tapper:
             async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/mining/progress') as response:
                 response_text = await response.text()
                 data = json.loads(response_text)
-                current_available = data['currentlyAvailable']
-                min_amount_for_claim = data['minAmountForClaim']
-                next_full = data['nextFullRestorationDate']
-                return (current_available,
-                        min_amount_for_claim,
-                        next_full)
+                current_available = data.get('currentlyAvailable')
+                min_amount_for_claim = data.get('minAmountForClaim')
+                next_full = data.get('nextFullRestorationDate')
+                if current_available and min_amount_for_claim and next_full:
+                    return (current_available,
+                            min_amount_for_claim,
+                            next_full)
+                return None, None, None
         except Exception as error:
             logger.error(f"Error happened: {error}")
             return None, None, None
@@ -121,8 +123,10 @@ class Tapper:
             async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/users') as response:
                 response_text = await response.text()
                 data = json.loads(response_text)
-                points = data['clicksCount']
-                return points
+                points = data.get('clicksCount')
+                if points:
+                    return points
+                return None
         except Exception as error:
             logger.error(f"Error happened: {error}")
             return None
@@ -147,16 +151,16 @@ class Tapper:
                 async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/pets') as response:
                     response_text = await response.text()
                     data = json.loads(response_text)
-                    for pet in data['data']:
-                        if pet['name'] == name_pet:
-                            return (pet['userPet']['id'],
-                                    pet['userPet']['levelUpPrice'],
-                                    data['buyPrice'])
+                    for pet in data.get('data'):
+                        if pet.get('name') == name_pet:
+                            return (pet.get('userPet').get('id'),
+                                    pet.get('userPet').get('levelUpPrice'),
+                                    data.get('buyPrice'))
             else:
                 async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/pets') as response:
                     response_text = await response.text()
                     data = json.loads(response_text)
-                    return data['buyPrice']
+                    return data.get('buyPrice')
             return None, None, None
         except Exception as error:
             logger.error(f"Error happened: {error}")
@@ -169,9 +173,11 @@ class Tapper:
             response_text = await response.text()
             data = json.loads(response_text)
             if data.get('pet'):
-                return data['pet']['name']
+                return data.get('pet').get('name')
+            elif data.get('message'):
+                return data.get('message')
             else:
-                return data['message']
+                return None
 
     async def level_up_pet(self, http_client: aiohttp.ClientSession, pet_id):
         try:
@@ -179,10 +185,13 @@ class Tapper:
                                             f'user-pets/{pet_id}/level-up') as response:
                 response_text = await response.text()
                 data = json.loads(response_text)
-                level = data['level']
-                cost = data['levelUpPrice']
-                return (level,
+                level = data.get('level')
+                cost = data.get('levelUpPrice')
+                if level and cost:
+                    return (level,
                         cost)
+                else:
+                    return None, None
         except Exception as error:
             logger.error(f"Error happened: {error}")
             return None, None
@@ -203,14 +212,12 @@ class Tapper:
         if proxy:
             await self.check_proxy(http_client=http_client, proxy=proxy)
 
-        tg_web_data = await self.get_tg_web_data(proxy=proxy)
-
         while True:
             try:
-
+                tg_web_data = await self.get_tg_web_data(proxy=proxy)
                 access_secret = await self.get_secret(userid=self.user_id)
 
-                if not access_secret:
+                if not access_secret or not tg_web_data:
                     continue
 
                 tg_web_data_parts = tg_web_data.split('&')
@@ -234,7 +241,8 @@ class Tapper:
 
                 current_available, min_amount, next_full = await self.get_progress(http_client=http_client)
 
-                if (current_available and min_amount) and (current_available > min_amount) and settings.AUTO_CLAIM:
+                if ((current_available is not None and min_amount is not None) and (current_available > min_amount)
+                        and settings.AUTO_CLAIM):
                     amount = await self.claim_mining(http_client=http_client)
                     if amount is not None:
                         balance = await self.get_stats(http_client=http_client)
@@ -253,10 +261,11 @@ class Tapper:
                             balance = await self.get_stats(http_client=http_client)
                             if int(balance) >= int(cost):
                                 level, cost = await self.level_up_pet(http_client=http_client, pet_id=id)
-                                logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                               f"Successfully upgraded pet: {name}. Level "
-                                               f"now: <green>{level}</green>, next level cost: "
-                                               f"<green>{cost}</green>")
+                                if level is not None and cost is not None:
+                                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                   f"Successfully upgraded pet: {name}. Level "
+                                                   f"now: <green>{level}</green>, next level cost: "
+                                                   f"<green>{cost}</green>")
                                 await asyncio.sleep(delay=3)
                             else:
                                 logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | "
@@ -272,9 +281,9 @@ class Tapper:
                 if settings.AUTO_BUY:
                     balance = await self.get_stats(http_client=http_client)
                     new_pet_cost = await self.get_pet_id(http_client=http_client, name_pet=None)
-                    if int(balance) >= int(new_pet_cost):
+                    if (balance is not None and new_pet_cost is not None) and int(balance) >= int(new_pet_cost):
                         pet_name = await self.buy_pet(http_client=http_client)
-                        if str(pet_name) != "You can buy only 1 pet in 24 hours":
+                        if (pet_name is not None) and str(pet_name) != "You can buy only 1 pet in 24 hours":
                             logger.success(f"<light-yellow>{self.session_name}</light-yellow> | Bought new pet, "
                                            f"you got <cyan>{pet_name}</cyan>")
                         else:
@@ -283,7 +292,7 @@ class Tapper:
 
                 logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Going sleep 1 hour")
 
-                await asyncio.sleep(3600)
+                await asyncio.sleep(15)
 
             except InvalidSession as error:
                 raise error

@@ -292,7 +292,7 @@ class Tapper:
 
                 logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Going sleep 1 hour")
 
-                await asyncio.sleep(15)
+                await asyncio.sleep(3600)
 
             except InvalidSession as error:
                 raise error

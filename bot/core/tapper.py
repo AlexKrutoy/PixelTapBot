@@ -189,7 +189,7 @@ class Tapper:
                 cost = data.get('levelUpPrice')
                 if level and cost:
                     return (level,
-                        cost)
+                            cost)
                 else:
                     return None, None
         except Exception as error:

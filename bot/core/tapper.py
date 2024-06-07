@@ -196,6 +196,22 @@ class Tapper:
             logger.error(f"Error happened: {error}")
             return None, None
 
+    async def get_tasks(self, http_client: aiohttp.ClientSession):
+        try:
+            async with http_client.get(url="https://api-clicker.pixelverse.xyz/api/tasks/my") as response:
+                if response.status == 201 or response.status == 200:
+                    return True
+        except Exception:
+            return False
+
+    async def get_users(self, http_client: aiohttp.ClientSession):
+        try:
+            async with http_client.get(url="https://api-clicker.pixelverse.xyz/api/users") as response:
+                if response.status == 201 or response.status == 200:
+                    return True
+        except Exception:
+            return False
+
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
             response = await http_client.get(url='https://httpbin.org/ip', timeout=aiohttp.ClientTimeout(5))
@@ -212,10 +228,11 @@ class Tapper:
         if proxy:
             await self.check_proxy(http_client=http_client, proxy=proxy)
 
+        tg_web_data = await self.get_tg_web_data(proxy=proxy)
+        access_secret = await self.get_secret(userid=self.user_id)
+
         while True:
             try:
-                tg_web_data = await self.get_tg_web_data(proxy=proxy)
-                access_secret = await self.get_secret(userid=self.user_id)
 
                 if not access_secret or not tg_web_data:
                     continue
@@ -238,6 +255,10 @@ class Tapper:
                 http_client.headers["username"] = f"{self.username}"
                 (http_client.headers
                     ["User-Agent"]) = generate_random_user_agent(device_type='android', browser_type='chrome')
+
+                status = await self.get_tasks(http_client=http_client)
+                if status is True:
+                    await self.get_users(http_client=http_client)
 
                 current_available, min_amount, next_full = await self.get_progress(http_client=http_client)
 

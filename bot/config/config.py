@@ -9,7 +9,6 @@ class Settings(BaseSettings):
 
     AUTO_CLAIM: bool = True
     AUTO_UPGRADE: bool = True
-    PET_NAME: str
     AUTO_BUY: bool = False
 
     USE_PROXY_FROM_FILE: bool = False

@@ -20,7 +20,7 @@
 | Multithreading                                                |        ✅        |
 | Proxy binding to session                                      |        ✅        |
 | Auto-claim coins                                              |        ✅        |
-| Auto-upgrade pet by his name                                  |        ✅        |
+| Auto-upgrade all pets                                         |        ✅        |
 | Auto-buy new pet                                              |        ✅        |
 | Support for tdata / pyrogram .session / telethon .session     |        ✅        |
 
@@ -30,8 +30,7 @@
 |--------------------------|:---------------------------------------------------------------------------------------------:|
 | **API_ID / API_HASH**    | Platform data from which to run the Telegram session (default - android)                     |
 | **AUTO_CLAIM**    | Auto-claim coins variable (default - True)                                                          |
-| **AUTO_UPGRADE**    | Auto-upgrade pet by name variable (default - True)                                                |
-| **PET_NAME**    | Pet name to upgrade (default - ""; please paste pet name in "")                                       |
+| **AUTO_UPGRADE**    | Auto-upgrade pet by name variable (default - True)                                                |                                  |
 | **AUTO_BUY**    | Auto-buy new pets variable (default - False)                                                          |
 | **USE_PROXY_FROM_FILE**  | Whether to use a proxy from the bot/config/proxies.txt file (True / False)                   |
 

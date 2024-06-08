@@ -145,26 +145,26 @@ class Tapper:
             logger.error(f"Error happened: {error}")
             return None
 
-    async def get_pet_id(self, http_client: aiohttp.ClientSession, name_pet):
+    async def get_all_pet_ids(self, http_client: aiohttp.ClientSession):
         try:
-            if name_pet is not None:
-                async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/pets') as response:
-                    response_text = await response.text()
-                    data = json.loads(response_text)
-                    for pet in data.get('data'):
-                        if pet.get('name') == name_pet:
-                            return (pet.get('userPet').get('id'),
-                                    pet.get('userPet').get('levelUpPrice'),
-                                    data.get('buyPrice'))
-            else:
-                async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/pets') as response:
-                    response_text = await response.text()
-                    data = json.loads(response_text)
-                    return data.get('buyPrice')
-            return None, None, None
+            async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/pets') as response:
+                response_text = await response.text()
+                data = json.loads(response_text)
+                pet_ids = [pet['userPet']['id'] for pet in data.get('data', [])]
+                return pet_ids
         except Exception as error:
             logger.error(f"Error happened: {error}")
-            return None, None, None
+            return []
+
+    async def get_cost(self, http_client: aiohttp.ClientSession):
+        try:
+            async with http_client.get(url='https://api-clicker.pixelverse.xyz/api/pets') as response:
+                response_text = await response.text()
+                data = json.loads(response_text)
+                return data.get('buyPrice')
+        except Exception as error:
+            logger.error(f"Error happened: {error}")
+            return None
 
     async def buy_pet(self, http_client: aiohttp.ClientSession):
         async with http_client.post(url=f'https://api-clicker.pixelverse.xyz/api/pets/buy?'
@@ -178,6 +178,18 @@ class Tapper:
                 return data.get('message')
             else:
                 return None
+
+    async def get_pet_info(self, http_client: aiohttp.ClientSession, pet_id: str):
+        async with http_client.get(url=f'https://api-clicker.pixelverse.xyz/api/pets') as response:
+            response_text = await response.text()
+            data = json.loads(response_text)
+            for pet in data.get('data', []):
+                if pet.get('userPet', {}).get('id') == pet_id:
+                    return {
+                        'name': pet.get('name'),
+                        'levelUpPrice': pet.get('userPet', {}).get('levelUpPrice')
+                    }
+            return None
 
     async def level_up_pet(self, http_client: aiohttp.ClientSession, pet_id):
         try:
@@ -275,33 +287,50 @@ class Tapper:
                         continue
 
                 if settings.AUTO_UPGRADE:
-                    name = settings.PET_NAME
-                    id, cost, new_pet_cost = await self.get_pet_id(http_client=http_client, name_pet=name)
-                    if cost is not None and id is not None:
-                        while True:
-                            balance = await self.get_stats(http_client=http_client)
-                            if int(balance) >= int(cost):
-                                level, cost = await self.level_up_pet(http_client=http_client, pet_id=id)
-                                if level is not None and cost is not None:
-                                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                                   f"Successfully upgraded pet: {name}. Level "
-                                                   f"now: <green>{level}</green>, next level cost: "
-                                                   f"<green>{cost}</green>")
-                                await asyncio.sleep(delay=3)
-                            else:
-                                logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                               f"Not enough money to upgrade pet. "
-                                               f"Balance: <green>{int(balance)}</green>, level up "
-                                               f"pet cost: <green>{cost}</green>")
-                                break
-                    else:
+                    pet_ids = await self.get_all_pet_ids(http_client=http_client)
+                    if not pet_ids:
                         logger.critical(
-                            f"<light-yellow>{self.session_name}</light-yellow> | <red>Not found pet with that "
-                            f"name in .env file</red>")
+                            f"<light-yellow>{self.session_name}</light-yellow> | <red>No pets found in the API "
+                            f"response</red>"
+                        )
+                    for pet_id in pet_ids:
+                        await asyncio.sleep(5)
+                        pet_info = await self.get_pet_info(http_client=http_client,
+                                                           pet_id=pet_id)
+                        if pet_info:
+                            pet_name, cost = pet_info['name'], pet_info['levelUpPrice']
+                            if cost is not None:
+                                while True:
+                                    balance = await self.get_stats(http_client=http_client)
+                                    if int(balance) >= int(cost):
+                                        level, cost = await self.level_up_pet(http_client=http_client, pet_id=pet_id)
+                                        if level is not None and cost is not None:
+                                            logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                           f"Successfully upgraded pet: {pet_name}. Level "
+                                                           f"now: <green>{level}</green>, next level cost: "
+                                                           f"<green>{cost}</green>")
+                                        await asyncio.sleep(3)
+                                    else:
+                                        logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                       f"Not enough money to upgrade {pet_name}. "
+                                                       f"Balance: <green>{int(balance)}</green>, level up "
+                                                       f"pet cost: <green>{cost}</green>")
+                                        break
+                            else:
+                                logger.critical(
+                                    f"<light-yellow>{self.session_name}</light-yellow> | <red>Pet ID {pet_id} does "
+                                    f"not have a valid cost</red>"
+                                )
+                        else:
+                            logger.critical(
+                                f"<light-yellow>{self.session_name}</light-yellow> | <red>Unable to fetch info for "
+                                f"pet ID {pet_id}</red>"
+                            )
+                        await asyncio.sleep(5)
 
                 if settings.AUTO_BUY:
                     balance = await self.get_stats(http_client=http_client)
-                    new_pet_cost = await self.get_pet_id(http_client=http_client, name_pet=None)
+                    new_pet_cost = await self.get_cost(http_client=http_client)
                     if (balance is not None and new_pet_cost is not None) and int(balance) >= int(new_pet_cost):
                         pet_name = await self.buy_pet(http_client=http_client)
                         if (pet_name is not None) and str(pet_name) != "You can buy only 1 pet in 24 hours":

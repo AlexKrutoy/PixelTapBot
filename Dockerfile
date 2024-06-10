@@ -9,4 +9,4 @@ RUN pip3 install --no-warn-script-location --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python3", "main.py", "-a", "2"]
+CMD ["python3", "main.py", "-a", "1"]

@@ -24,8 +24,12 @@ start_text = """
 ██╔═══╝ ██║ ██╔██╗ ██╔══╝  ██║     ██║   ██╔══██║██╔═══╝ ██╔══██╗██║   ██║   ██║     
 ██║     ██║██╔╝ ██╗███████╗███████╗██║   ██║  ██║██║     ██████╔╝╚██████╔╝   ██║      
 ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝   ╚═╝  ╚═╝╚═╝     ╚═════╝  ╚═════╝    ╚═╝                                                            
-                                                               
 
+     Main coder and owner of repo: AlexKrutoy | https://t.me/hidden_coding                         
+     
+  For daily and battles code thanks to - @Axcent_ape | https://t.me/ApeCryptor
+    
+    
 Select an action:
 
     1. Run clicker

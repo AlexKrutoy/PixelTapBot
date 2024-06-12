@@ -15,24 +15,30 @@
 > 🇷 🇺 README in russian available [here](README-RU.md)
 
 ## Features  
-| Feature                                                     | Supported  |
-|---------------------------------------------------------------|:----------------:|
-| Multithreading                                                |        ✅        |
-| Proxy binding to session                                      |        ✅        |
-| Auto-claim coins                                              |        ✅        |
-| Auto-upgrade all pets                                         |        ✅        |
-| Auto-buy new pet                                              |        ✅        |
-| Support for tdata / pyrogram .session / telethon .session     |        ✅        |
+| Feature                                                   | Supported |
+|-----------------------------------------------------------|:---------:|
+| Multithreading                                            |     ✅     |
+| Proxy binding to session                                  |     ✅     |
+| Auto-claim coins                                          |     ✅     |
+| Auto-upgrade all pets                                     |     ✅     |
+| Auto-buy new pet                                          |     ✅     |
+| Auto-battle with auto-select best damage pet              |     ✅     |
+| Auto-daily getting                                        |     ✅     |
+| Support for tdata / pyrogram .session / telethon .session |     ✅     |
 
 
 ## [Settings](https://github.com/AlexKrutoy/PixelTapBot/blob/main/.env-example/)
-| Settings | Description |
-|--------------------------|:---------------------------------------------------------------------------------------------:|
-| **API_ID / API_HASH**    | Platform data from which to run the Telegram session (default - android)                     |
-| **AUTO_CLAIM**    | Auto-claim coins variable (default - True)                                                          |
-| **AUTO_UPGRADE**    | Auto-upgrade pet by name variable (default - True)                                                |                                  |
-| **AUTO_BUY**    | Auto-buy new pets variable (default - False)                                                          |
-| **USE_PROXY_FROM_FILE**  | Whether to use a proxy from the bot/config/proxies.txt file (True / False)                   |
+| Settings                  |                                   Description                                    |
+|---------------------------|:--------------------------------------------------------------------------------:|
+| **API_ID / API_HASH**     |     Platform data from which to run the Telegram session (default - android)     |
+| **AUTO_CLAIM**            |                    Auto-claim coins variable (default - True)                    |
+| **AUTO_UPGRADE**          |                        Auto-upgrade pets (default - True)                        |                                  |
+| **AUTO_BUY**              |                   Auto-buy new pets variable (default - False)                   |
+| **AUTO_BATTLE**           |                      Auto battle variable (default - False)                      |
+| **DELAY_BETWEEN_BATTLES** |                   Cooldown between battles (default - [5, 10]                    |
+| **BATTLES_COUNT**         |              How much battles to do before sleeping (default - 10)               |
+| **CLICK_COOLDOWN**        | Click cooldown in battles (default - [0.085, 0.09) ((i recommend those numbers)) |
+| **USE_PROXY_FROM_FILE**   |   Whether to use a proxy from the `bot/config/proxies.txt` file (True / False)   |
 
 ## Quick Start 📚
 

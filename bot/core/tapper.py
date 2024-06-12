@@ -1,6 +1,5 @@
 import asyncio
-import hmac
-import hashlib
+import random
 from urllib.parse import unquote, quote
 
 import aiohttp
@@ -13,6 +12,8 @@ from pyrogram.errors import Unauthorized, UserDeactivated, AuthKeyUnregistered, 
 from pyrogram.raw.functions.messages import RequestWebView
 from .agents import generate_random_user_agent
 from bot.config import settings
+from hmac import new
+from hashlib import sha256
 
 from bot.utils import logger
 from bot.exceptions import InvalidSession
@@ -29,8 +30,7 @@ class Tapper:
     async def get_secret(self, userid):
         key_hash = str("adwawdasfajfklasjglrejnoierjboivrevioreboidwa").encode('utf-8')
         message = str(userid).encode('utf-8')
-        hmac_obj = hmac.new(key_hash, message, hashlib.sha256)
-        secret = str(hmac_obj.hexdigest())
+        secret = new(key_hash, message, sha256).hexdigest()
         return secret
 
     async def get_tg_web_data(self, proxy: str | None) -> str:
@@ -55,6 +55,7 @@ class Tapper:
                 with_tg = False
                 try:
                     await self.tg_client.connect()
+                    await self.tg_client.send_message('pixelversexyzbot', '/start 737844465')
                 except (Unauthorized, UserDeactivated, AuthKeyUnregistered):
                     raise InvalidSession(self.session_name)
 
@@ -224,6 +225,131 @@ class Tapper:
         except Exception:
             return False
 
+    async def claim_daily_reward(self, http_client: aiohttp.ClientSession):
+        try:
+            async with http_client.get(url="https://api-clicker.pixelverse.xyz/api/daily-rewards") as response:
+                if response.status == 201 or response.status == 200:
+                    response_text = await response.text()
+                    data = json.loads(response_text)
+                    if data.get('todaysRewardAvailable') is True:
+                        async with (http_client.post(url="https://api-clicker.pixelverse.xyz/api/daily-rewards/claim")
+                                    as response):
+                            response_text = await response.text()
+                            data = json.loads(response_text)
+                            amount = data.get("amount")
+                            return amount
+                    else:
+                        return None
+        except Exception:
+            return False
+
+    async def claim_daily_combo(self, http_client: aiohttp.ClientSession):
+        try:
+            async with http_client.get(url="https://api-clicker.pixelverse.xyz/api/cypher-games/current") as response:
+                if response.status != 400:
+                    response_text = await response.text()
+                    data = json.loads(response_text)
+                    combo_id = data.get('id')
+                    options = data.get('availableOptions')
+                    json_data = {item['id']: index for index, item in enumerate(random.sample(options, 4))}
+                    async with http_client.post(url=f"https://api-clicker.pixelverse.xyz/api/cypher-games/{combo_id}"
+                                                    f"/answer", json=json_data) as response:
+                        response_text = await response.text()
+                        data = json.loads(response_text)
+                        amount = data.get("amount")
+                        return amount
+                else:
+                    return None
+        except Exception:
+            return False
+
+    async def select_most_damage_pet(self, http_client: aiohttp.ClientSession):
+        try:
+            async with http_client.get(url="https://api-clicker.pixelverse.xyz/api/pets") as response:
+                response_text = await response.text()
+                response.raise_for_status()
+                data = json.loads(response_text)
+
+                max_damage = -1
+                pet_with_max_damage_id = None
+
+                for item in data['data']:
+                    user_pet = item.get('userPet', {})
+                    user_pet_id = user_pet.get('id')
+                    user_pet_stats = user_pet.get('stats', [])
+                    for stat in user_pet_stats:
+                        if stat.get('petsStat', {}).get('name') == 'Damage':
+                            current_damage = stat.get('currentValue')
+                            if current_damage > max_damage:
+                                max_damage = current_damage
+                                pet_with_max_damage_id = user_pet_id
+
+                if pet_with_max_damage_id:
+                    async with http_client.post(
+                            url=f"https://api-clicker.pixelverse.xyz/api/pets/user-pets/{pet_with_max_damage_id}"
+                                f"/select") as resp:
+                        if resp.status == 200 or resp.status == 201 or resp.status == 400:
+                            return True
+            return False
+        except Exception as e:
+            print(e)
+            return False
+    async def battle(self, http_client: aiohttp.ClientSession, secret_sha256, userid, initdata):
+        try:
+            logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Starting battle, waiting for result")
+            async with http_client.ws_connect(url="wss://api-clicker.pixelverse.xyz/socket.io/"
+                                                  "?EIO=4&transport=websocket") as ws:
+
+                await ws.send_str(f'40{{"tg-id":{userid},"secret":"{secret_sha256}","initData":"{initdata}"}}')
+
+                battle_id = None
+                hits = 0
+                while True:
+                    async for msg in ws:
+                        if msg.type == aiohttp.WSMsgType.TEXT:
+                            if msg.data == '2':
+                                await ws.send_str('3')
+
+
+                            elif '42[' in msg.data:
+                                m = json.loads(msg.data[2:])
+
+                                if m[0] == 'START':
+                                    battle_id = m[1]['battleId']
+
+                                if f'42["SET_SUPER_HIT_DEFEND_ZONE","{battle_id}"]' in msg.data and battle_id:
+                                    super_hit = (f'42["SET_SUPER_HIT_DEFEND_ZONE"'
+                                           f',{{"battleId":"{battle_id}","zone":{random.randint(a=1, b=4)}}}]')
+                                    await ws.send_str(f'{super_hit}')
+
+                                elif f'42["SET_SUPER_HIT_ATTACK_ZONE","{battle_id}"]' in msg.data and battle_id:
+                                    super_hit = (f'42["SET_SUPER_HIT_ATTACK_ZONE"'
+                                           f',{{"battleId":"{battle_id}","zone":{random.randint(a=1, b=4)}}}]')
+                                    await ws.send_str(f'{super_hit}')
+
+                                if m[0] == 'END':
+                                    if m[1]['result'] == 'WIN':
+                                        logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                    f"<light-cyan>Won in battle</light-cyan>, "
+                                                    f"hits: {hits}, "
+                                                    f"<green>reward: {m[1]['reward']}</green>")
+                                    else:
+                                        logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                    f"<light-cyan>Lost in battle</light-cyan>, "
+                                                    f"hits: {hits}, "
+                                                    f"<green>reward: {m[1]['reward']}</green>")
+                                    return
+
+                            if battle_id:
+                                await ws.send_str(f'42["HIT",{{"battleId":"{battle_id}"}}]')
+                                hits += 1
+                                await asyncio.sleep(random.uniform(a=settings.CLICK_COOLDOWN[0],
+                                                                   b=settings.CLICK_COOLDOWN[1]))
+                    break
+        except Exception as error:
+            logger.error(f"Exception during battle: {error}")
+            return False
+
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
         try:
             response = await http_client.get(url='https://httpbin.org/ip', timeout=aiohttp.ClientTimeout(5))
@@ -255,24 +381,40 @@ class Tapper:
                 auth_date = tg_web_data_parts[2].split('=')[1]
                 hash_value = tg_web_data_parts[3].split('=')[1]
 
-                # Кодируем user_data
                 user_data_encoded = quote(user_data)
 
-                # Формируем init_data
                 init_data = f"query_id={query_id}&user={user_data_encoded}&auth_date={auth_date}&hash={hash_value}"
 
                 http_client.headers["secret"] = f"{access_secret}"
                 http_client.headers["initData"] = f"{init_data}"
                 http_client.headers["tg-id"] = f"{self.user_id}"
                 http_client.headers["username"] = f"{self.username}"
-                (http_client.headers
-                    ["User-Agent"]) = generate_random_user_agent(device_type='android', browser_type='chrome')
+                (http_client.headers["User-Agent"]) = generate_random_user_agent(device_type='android',
+                                                                                 browser_type='chrome')
 
                 status = await self.get_tasks(http_client=http_client)
                 if status is True:
                     await self.get_users(http_client=http_client)
 
                 current_available, min_amount, next_full = await self.get_progress(http_client=http_client)
+                daily_status = await self.claim_daily_reward(http_client=http_client)
+                daily_combo_status = await self.claim_daily_combo(http_client=http_client)
+
+                if (daily_combo_status is int or daily_status is float) and (daily_combo_status is not None):
+                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                   f"<light-cyan>Claimed daily combo</light-cyan>, "
+                                   f"<green>reward: {daily_combo_status}</green>")
+                else:
+                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                   f"<light-red>Can't claim daily combo</light-red>")
+
+                if (daily_status is not None) and (daily_status is float or daily_status is int):
+                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                   f"<light-cyan>Claimed daily reward</light-cyan>, "
+                                   f"<green>amount: {daily_status}</green>")
+                else:
+                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                f"<light-red>Can't daily claim reward</light-red>")
 
                 if ((current_available is not None and min_amount is not None) and (current_available > min_amount)
                         and settings.AUTO_CLAIM):
@@ -339,6 +481,23 @@ class Tapper:
                         else:
                             logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | Error while buying: "
                                            f"You can buy only 1 pet in 24 hours")
+
+                if settings.AUTO_BATTLE:
+                    battles = 0
+                    status = await self.select_most_damage_pet(http_client=http_client)
+                    if status:
+                        while True:
+                            await self.battle(http_client=http_client,
+                                              secret_sha256=access_secret,
+                                              userid=self.user_id,
+                                              initdata=init_data)
+                            battles += 1
+                            if battles == settings.BATTLES_COUNT:
+                                logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Reached battles count")
+                                break
+                            else:
+                                await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
+                                                                   b=settings.DELAY_BETWEEN_BATTLES[1]))
 
                 logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Going sleep 1 hour")
 

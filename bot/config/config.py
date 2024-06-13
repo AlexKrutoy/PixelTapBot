@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     API_ID: int
     API_HASH: str
 
+    AUTO_DAILY_JOIN: bool = True
+    AUTO_DAILY_COMBO: bool = True
     AUTO_CLAIM: bool = True
     AUTO_UPGRADE: bool = True
     AUTO_BUY: bool = False

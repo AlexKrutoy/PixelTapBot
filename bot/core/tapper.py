@@ -399,24 +399,31 @@ class Tapper:
                     await self.get_users(http_client=http_client)
 
                 current_available, min_amount, next_full = await self.get_progress(http_client=http_client)
-                daily_status = await self.claim_daily_reward(http_client=http_client)
-                daily_combo_status = await self.claim_daily_combo(http_client=http_client)
 
-                if (daily_combo_status is int or daily_status is float) and (daily_combo_status is not None):
-                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                   f"<light-cyan>Claimed daily combo</light-cyan>, "
-                                   f"<green>reward: {daily_combo_status}</green>")
-                else:
-                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                   f"<light-red>Can't claim daily combo</light-red>")
+                if settings.AUTO_DAILY_JOIN:
 
-                if (daily_status is not None) and (daily_status is float or daily_status is int):
-                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                   f"<light-cyan>Claimed daily reward</light-cyan>, "
-                                   f"<green>amount: {daily_status}</green>")
-                else:
-                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                f"<light-red>Can't daily claim reward</light-red>")
+                    daily_status = await self.claim_daily_reward(http_client=http_client)
+
+                    if (daily_status is not None) and (daily_status is float or daily_status is int):
+                        logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                       f"<light-cyan>Claimed daily reward</light-cyan>, "
+                                       f"<green>amount: {daily_status}</green>")
+                    else:
+                        logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                    f"<light-red>Can't daily claim reward</light-red>")
+
+                if settings.AUTO_DAILY_COMBO:
+                    
+                    daily_combo_status = await self.claim_daily_combo(http_client=http_client)
+
+                    if (daily_combo_status is int or daily_status is float) and (daily_combo_status is not None):
+                        logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                       f"<light-cyan>Claimed daily combo</light-cyan>, "
+                                       f"<green>reward: {daily_combo_status}</green>")
+                    else:
+                        logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                       f"<light-red>Can't claim daily combo</light-red>")
+
 
                 if ((current_available is not None and min_amount is not None) and (current_available > min_amount)
                         and settings.AUTO_CLAIM):

@@ -403,7 +403,8 @@ class Tapper:
                     await self.get_users(http_client=http_client)
 
                 current_available, min_amount, next_full = await self.get_progress(http_client=http_client)
-                if settings.AUTO_DAILY_JOIN:
+
+                if settings.AUTO_DAILY_JOIN is True:
 
                     daily_status = await self.claim_daily_reward(http_client=http_client)
 
@@ -415,7 +416,7 @@ class Tapper:
                         logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
                                     f"<light-red>Can't daily claim reward</light-red>")
 
-                if settings.AUTO_DAILY_COMBO:
+                if settings.AUTO_DAILY_COMBO is True:
 
                     daily_combo_status = await self.claim_daily_combo(http_client=http_client)
 
@@ -429,7 +430,7 @@ class Tapper:
 
 
                 if ((current_available is not None and min_amount is not None) and (current_available > min_amount)
-                        and settings.AUTO_CLAIM):
+                        and settings.AUTO_CLAIM is True):
                     amount = await self.claim_mining(http_client=http_client)
                     if amount is not None:
                         balance = await self.get_stats(http_client=http_client)
@@ -440,7 +441,7 @@ class Tapper:
                     else:
                         continue
 
-                if settings.AUTO_UPGRADE:
+                if settings.AUTO_UPGRADE is True:
                     pet_ids, pet_max_ids = await self.get_all_pet_ids(http_client=http_client)
                     if pet_ids is not None and pet_max_ids is not None:
                         if not pet_ids and not pet_max_ids:
@@ -490,7 +491,7 @@ class Tapper:
                     else:
                         continue
 
-                if settings.AUTO_BUY:
+                if settings.AUTO_BUY is True:
                     balance = await self.get_stats(http_client=http_client)
                     new_pet_cost = await self.get_cost(http_client=http_client)
                     if (balance is not None and new_pet_cost is not None) and int(balance) >= int(new_pet_cost):
@@ -502,7 +503,7 @@ class Tapper:
                             logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | Error while buying: "
                                            f"You can buy only 1 pet in 24 hours")
 
-                if settings.AUTO_BATTLE:
+                if settings.AUTO_BATTLE is True:
                     status = await self.select_most_damage_pet(http_client=http_client)
                     if status:
                         battle_tasks = []

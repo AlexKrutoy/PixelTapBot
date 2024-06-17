@@ -28,17 +28,18 @@
 
 
 ## [Settings](https://github.com/AlexKrutoy/PixelTapBot/blob/main/.env-example/)
-| Settings                  |                                   Description                                    |
-|---------------------------|:--------------------------------------------------------------------------------:|
-| **API_ID / API_HASH**     |     Platform data from which to run the Telegram session (default - android)     |
-| **AUTO_CLAIM**            |                    Auto-claim coins variable (default - True)                    |
-| **AUTO_UPGRADE**          |                        Auto-upgrade pets (default - True)                        |                                  |
-| **AUTO_BUY**              |                   Auto-buy new pets variable (default - False)                   |
-| **AUTO_BATTLE**           |                      Auto battle variable (default - False)                      |
-| **DELAY_BETWEEN_BATTLES** |                   Cooldown between battles (default - [5, 10]                    |
-| **BATTLES_COUNT**         |              How much battles to do before sleeping (default - 10)               |
-| **CLICK_COOLDOWN**        | Click cooldown in battles (default - [0.085, 0.09) ((i recommend those numbers)) |
-| **USE_PROXY_FROM_FILE**   |   Whether to use a proxy from the `bot/config/proxies.txt` file (True / False)   |
+| Settings                  |                                                      Description                                                      |
+|---------------------------|:---------------------------------------------------------------------------------------------------------------------:|
+| **API_ID / API_HASH**     |                       Platform data from which to run the Telegram session (default - android)                        |
+| **AUTO_CLAIM**            |                                      Auto-claim coins variable (default - True)                                       |
+| **AUTO_UPGRADE**          |                                          Auto-upgrade pets (default - True)                                           |
+| **AUTO_BUY**              |                                     Auto-buy new pets variable (default - False)                                      |
+| **AUTO_BATTLE**           |                                        Auto battle variable (default - False)                                         |
+| **DELAY_BETWEEN_BATTLES** |                                      Cooldown between battles (default - [5, 10]                                      |
+| **CLICK_COOLDOWN**        |                   Click cooldown in battles (default - [0.085, 0.09) ((i recommend those numbers))                    |
+| **BATTLES_COUNT**         |                                 How much battles to do before sleeping (default - 10)                                 |
+| **BATTLE_METHOD**         | Choose method for battles, 1 - run all battles at once (higher lose chance), 2 - run battles by queue ((default - 2)) |
+| **USE_PROXY_FROM_FILE**   |                     Whether to use a proxy from the `bot/config/proxies.txt` file (True / False)                      |
 
 ## Quick Start 📚
 

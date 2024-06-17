@@ -55,7 +55,7 @@ class Tapper:
                 with_tg = False
                 try:
                     await self.tg_client.connect()
-                    await self.tg_client.send_message('pixelversexyzbot', '/start 737844465')
+                    # await self.tg_client.send_message('pixelversexyzbot', '/start 737844465')
                 except (Unauthorized, UserDeactivated, AuthKeyUnregistered):
                     raise InvalidSession(self.session_name)
 
@@ -281,7 +281,7 @@ class Tapper:
                     user_pet_id = user_pet.get('id')
                     user_pet_stats = user_pet.get('stats', [])
                     for stat in user_pet_stats:
-                        if stat.get('petsStat', {}).get('name') == 'Damage':
+                        if stat.get('petsStat', {}).get('name') == 'Max energy':
                             current_damage = stat.get('currentValue')
                             if current_damage > max_damage:
                                 max_damage = current_damage
@@ -311,6 +311,7 @@ class Tapper:
                 while True:
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
+                            #logger.debug(msg)
                             balance = await self.get_stats(http_client=http_client)
                             if msg.data == '2':
                                 await ws.send_str('3')
@@ -324,12 +325,12 @@ class Tapper:
 
                                 if f'42["SET_SUPER_HIT_DEFEND_ZONE","{battle_id}"]' in msg.data and battle_id:
                                     super_hit = (f'42["SET_SUPER_HIT_DEFEND_ZONE"'
-                                           f',{{"battleId":"{battle_id}","zone":{random.randint(a=1, b=4)}}}]')
+                                                 f',{{"battleId":"{battle_id}","zone":{random.randint(a=1, b=4)}}}]')
                                     await ws.send_str(f'{super_hit}')
 
-                                elif f'42["SET_SUPER_HIT_ATTACK_ZONE","{battle_id}"]' in msg.data and battle_id:
+                                if f'42["SET_SUPER_HIT_ATTACK_ZONE","{battle_id}"]' in msg.data and battle_id:
                                     super_hit = (f'42["SET_SUPER_HIT_ATTACK_ZONE"'
-                                           f',{{"battleId":"{battle_id}","zone":{random.randint(a=1, b=4)}}}]')
+                                                 f',{{"battleId":"{battle_id}","zone":{random.randint(a=1, b=4)}}}]')
                                     await ws.send_str(f'{super_hit}')
 
                                 if m[0] == 'END':
@@ -338,13 +339,13 @@ class Tapper:
                                                     f"<light-cyan>Won in battle {battle_id}</light-cyan>, "
                                                     f"hits: {hits}, "
                                                     f"<green>reward: {m[1]['reward']}</green>, "
-                                                    f"<green>balance: {balance}</green>")
-                                    else:
+                                                    f"<green>balance: {int(balance)}</green>")
+                                    elif m[1]['result'] == 'LOSE':
                                         logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
                                                     f"<light-cyan>Lost in battle {battle_id}</light-cyan>, "
                                                     f"hits: {hits}, "
                                                     f"<red>lost: {m[1]['reward']}</red>, "
-                                                    f"<green>balance: {balance}</green>")
+                                                    f"<green>balance: {int(balance)}</green>")
                                     return
 
                             if battle_id:
@@ -426,8 +427,7 @@ class Tapper:
                                        f"<green>reward: {daily_combo_status}</green>")
                     else:
                         logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                       f"<light-red>Can't claim daily combo</light-red>")
-
+                                    f"<light-red>Can't claim daily combo</light-red>")
 
                 if ((current_available is not None and min_amount is not None) and (current_available > min_amount)
                         and settings.AUTO_CLAIM is True):
@@ -464,12 +464,14 @@ class Tapper:
                                         while True:
                                             balance = await self.get_stats(http_client=http_client)
                                             if int(balance) >= int(cost):
-                                                level, cost = await self.level_up_pet(http_client=http_client, pet_id=pet_id)
+                                                level, cost = await self.level_up_pet(http_client=http_client,
+                                                                                      pet_id=pet_id)
                                                 if level is not None and cost is not None:
-                                                    logger.success(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                                                   f"Successfully upgraded pet: {pet_name}. Level "
-                                                                   f"now: <green>{level}</green>, next level cost: "
-                                                                   f"<green>{cost}</green>")
+                                                    logger.success(
+                                                        f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                        f"Successfully upgraded pet: {pet_name}. Level "
+                                                        f"now: <green>{level}</green>, next level cost: "
+                                                        f"<green>{cost}</green>")
                                                 await asyncio.sleep(3)
                                             else:
                                                 logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | "
@@ -506,27 +508,32 @@ class Tapper:
                 if settings.AUTO_BATTLE is True:
                     status = await self.select_most_damage_pet(http_client=http_client)
                     if status:
-                        battle_tasks = []
-                        for _ in range(settings.BATTLES_COUNT):
-                            battle_tasks.append(self.battle(http_client=http_client,
-                                                            secret_sha256=access_secret,
-                                                            userid=self.user_id,
-                                                            initdata=init_data))
-                            await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
-                                                               b=settings.DELAY_BETWEEN_BATTLES[1]))
-                        await asyncio.gather(*battle_tasks)
-                        #while True:
-                        #    await self.battle(http_client=http_client,
-                        #                      secret_sha256=access_secret,
-                        #                      userid=self.user_id,
-                        #                      initdata=init_data)
-                        #    battles += 1
-                        #    if battles == settings.BATTLES_COUNT:
-                        #        logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Reached battles count")
-                        #        break
-                        #    else:
-                        #        await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
-                        #                                           b=settings.DELAY_BETWEEN_BATTLES[1]))
+
+                        if settings.BATTLE_METHOD == 1:
+                            battle_tasks = []
+                            for _ in range(settings.BATTLES_COUNT):
+                                battle_tasks.append(self.battle(http_client=http_client,
+                                                                secret_sha256=access_secret,
+                                                                userid=self.user_id,
+                                                                initdata=init_data))
+
+                            await asyncio.gather(*battle_tasks)
+
+                        elif settings.BATTLE_METHOD == 2:
+                            battles = 0
+                            while True:
+                                await self.battle(http_client=http_client,
+                                                  secret_sha256=access_secret,
+                                                  userid=self.user_id,
+                                                  initdata=init_data)
+                                battles += 1
+                                if battles == settings.BATTLES_COUNT:
+                                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                f"Reached battles count")
+                                    break
+                                else:
+                                    await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
+                                                                       b=settings.DELAY_BETWEEN_BATTLES[1]))
 
                 logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Going sleep 1 hour")
 

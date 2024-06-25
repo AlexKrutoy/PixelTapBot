@@ -152,8 +152,17 @@ class Tapper:
                 if response.status == 200 or response.status == 201:
                     response_text = await response.text()
                     data = json.loads(response_text)
-                    pet_ids = [pet['userPet']['id'] for pet in data.get('data', []) if not pet['userPet']['isMaxLevel']]
-                    pet_max_ids = [pet['userPet']['id'] for pet in data.get('data', []) if pet['userPet']['isMaxLevel']]
+                    pet_ids = []
+                    pet_max_ids = []
+                    pet_enerdy_ids = []
+                    for pet in data.get('data', []):
+                        if pet['userPet'] and 'stats' in pet['userPet']:
+                            stats = pet['userPet']['stats']
+                            max_level_stats = [stat for stat in stats if stat['currentValue'] == stat['maxValue']]
+                            if len(max_level_stats) >= 3:
+                                pet_max_ids.append(pet['userPet']['id'])
+                            else:
+                                pet_ids.append(pet['userPet']['id'])
                     return pet_ids, pet_max_ids
                 return None, None
         except Exception as error:
@@ -188,10 +197,15 @@ class Tapper:
             response_text = await response.text()
             data = json.loads(response_text)
             for pet in data.get('data', []):
+                user_pet = pet.get('userPet', {})
                 if pet.get('userPet', {}).get('id') == pet_id:
+                    energy = next((stat.get('currentValue') for stat in user_pet.get('stats', []) if
+                                   stat.get('petsStat', {}).get('name') == 'MAX_ENERGY'), None)
                     return {
+                        'id': pet_id,
                         'name': pet.get('name'),
-                        'levelUpPrice': pet.get('userPet', {}).get('levelUpPrice')
+                        'levelUpPrice': pet.get('userPet', {}).get('levelUpPrice'),
+                        'energy': energy
                     }
             return None
 
@@ -281,7 +295,7 @@ class Tapper:
                     user_pet_id = user_pet.get('id')
                     user_pet_stats = user_pet.get('stats', [])
                     for stat in user_pet_stats:
-                        if stat.get('petsStat', {}).get('name') == 'Max energy':
+                        if stat.get('petsStat', {}).get('name') == 'MAX_ENERGY':
                             current_damage = stat.get('currentValue')
                             if current_damage > max_damage:
                                 max_damage = current_damage
@@ -311,7 +325,6 @@ class Tapper:
                 while True:
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
-                            #logger.debug(msg)
                             balance = await self.get_stats(http_client=http_client)
                             if msg.data == '2':
                                 await ws.send_str('3')
@@ -441,53 +454,62 @@ class Tapper:
                     else:
                         continue
 
-                if settings.AUTO_UPGRADE is True:
+                if settings.AUTO_UPGRADE:
                     pet_ids, pet_max_ids = await self.get_all_pet_ids(http_client=http_client)
                     if pet_ids is not None and pet_max_ids is not None:
                         if not pet_ids and not pet_max_ids:
                             logger.critical(
-                                f"<light-yellow>{self.session_name}</light-yellow> | <red>No pets found in the API "
-                                f"response</red>"
+                                f"<light-yellow>{self.session_name}</light-yellow> | <red>No pets found in the"
+                                f" API response</red>"
                             )
                         elif not pet_ids and pet_max_ids:
                             logger.warning(
-                                f"<light-yellow>{self.session_name}</light-yellow> | <yellow>All pets have max level"
-                                f", can't upgrade them</yellow>")
+                                f"<light-yellow>{self.session_name}</light-yellow> | <yellow>All pets have max "
+                                f"level, can't upgrade them</yellow>"
+                            )
                         elif pet_ids:
+                            pets_info = []
                             for pet_id in pet_ids:
-                                await asyncio.sleep(5)
-                                pet_info = await self.get_pet_info(http_client=http_client,
-                                                                   pet_id=pet_id)
+                                pet_info = await self.get_pet_info(http_client=http_client, pet_id=pet_id)
                                 if pet_info:
-                                    pet_name, cost = pet_info['name'], pet_info['levelUpPrice']
-                                    if cost is not None:
-                                        while True:
-                                            balance = await self.get_stats(http_client=http_client)
-                                            if int(balance) >= int(cost):
-                                                level, cost = await self.level_up_pet(http_client=http_client,
-                                                                                      pet_id=pet_id)
-                                                if level is not None and cost is not None:
-                                                    logger.success(
-                                                        f"<light-yellow>{self.session_name}</light-yellow> | "
-                                                        f"Successfully upgraded pet: {pet_name}. Level "
-                                                        f"now: <green>{level}</green>, next level cost: "
-                                                        f"<green>{cost}</green>")
-                                                await asyncio.sleep(3)
-                                            else:
-                                                logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                                               f"Not enough money to upgrade {pet_name}. "
-                                                               f"Balance: <green>{int(balance)}</green>, level up "
-                                                               f"pet cost: <green>{cost}</green>")
-                                                break
-                                    else:
-                                        logger.critical(
-                                            f"<light-yellow>{self.session_name}</light-yellow> | <red>Pet ID {pet_id} does "
-                                            f"not have a valid cost</red>"
-                                        )
+                                    pets_info.append(pet_info)
                                 else:
                                     logger.critical(
-                                        f"<light-yellow>{self.session_name}</light-yellow> | <red>Unable to fetch info for "
-                                        f"pet ID {pet_id}</red>"
+                                        f"<light-yellow>{self.session_name}</light-yellow> | <red>Unable to"
+                                        f" fetch info for pet ID {pet_id}</red>"
+                                    )
+                                await asyncio.sleep(1)  # Slight delay to avoid overwhelming the server
+
+                            # Sort pets by energy in descending order
+                            pets_info.sort(key=lambda x: x['energy'], reverse=True)
+
+                            for pet_info in pets_info:
+                                pet_id = pet_info['id']
+                                pet_name, cost = pet_info['name'], pet_info['levelUpPrice']
+                                if cost is not None:
+                                    while True:
+                                        balance = await self.get_stats(http_client=http_client)
+                                        if int(balance) >= int(cost):
+                                            level, cost = await self.level_up_pet(http_client=http_client,
+                                                                                  pet_id=pet_id)
+                                            if level is not None and cost is not None:
+                                                logger.success(
+                                                    f"<light-yellow>{self.session_name}</light-yellow> | Successfully "
+                                                    f"upgraded pet: {pet_name}. Level now: <green>{level}</green>, next"
+                                                    f" level cost: <green>{cost}</green>"
+                                                )
+                                            await asyncio.sleep(3)
+                                        else:
+                                            logger.warning(
+                                                f"<light-yellow>{self.session_name}</light-yellow> | Not enough money "
+                                                f"to upgrade {pet_name}. Balance: <green>{int(balance)}</green>, level"
+                                                f" up pet cost: <green>{cost}</green>"
+                                            )
+                                            break
+                                else:
+                                    logger.critical(
+                                        f"<light-yellow>{self.session_name}</light-yellow> | <red>Pet ID {pet_id} does "
+                                        f"not have a valid cost</red>"
                                     )
                                 await asyncio.sleep(5)
                     else:

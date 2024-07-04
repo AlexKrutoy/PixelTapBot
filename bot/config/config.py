@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     CLICK_COOLDOWN: list[float] = [0.085, 0.09]
     BATTLES_COUNT: int = 10
     BATTLE_METHOD: int = 2
+    PET_NAME: str = 'null'
    
     USE_PROXY_FROM_FILE: bool = False
 

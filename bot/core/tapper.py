@@ -154,12 +154,10 @@ class Tapper:
                     data = json.loads(response_text)
                     pet_ids = []
                     pet_max_ids = []
-                    pet_enerdy_ids = []
                     for pet in data.get('data', []):
                         if pet['userPet'] and 'stats' in pet['userPet']:
-                            stats = pet['userPet']['stats']
-                            max_level_stats = [stat for stat in stats if stat['currentValue'] == stat['maxValue']]
-                            if len(max_level_stats) >= 3:
+                            lvl = pet['userPet']['level']
+                            if lvl == 39:
                                 pet_max_ids.append(pet['userPet']['id'])
                             else:
                                 pet_ids.append(pet['userPet']['id'])
@@ -294,14 +292,23 @@ class Tapper:
                     user_pet = item.get('userPet', {})
                     user_pet_id = user_pet.get('id')
                     user_pet_stats = user_pet.get('stats', [])
-                    for stat in user_pet_stats:
-                        if stat.get('petsStat', {}).get('name') == 'MAX_ENERGY':
-                            current_damage = stat.get('currentValue')
-                            if current_damage > max_damage:
-                                max_damage = current_damage
-                                pet_with_max_damage_id = user_pet_id
+
+                    if settings.PET_NAME == 'null':
+                        print('1')
+                        for stat in user_pet_stats:
+                            if stat.get('petsStat', {}).get('name') == 'MAX_ENERGY':
+                                current_damage = stat.get('currentValue')
+                                if current_damage > max_damage:
+                                    max_damage = current_damage
+                                    pet_with_max_damage_id = user_pet_id
+
+                    else:
+                        print('2')
+                        if item.get('name') == settings.PET_NAME:
+                            pet_with_max_damage_id = user_pet_id
 
                 if pet_with_max_damage_id:
+                    print(pet_with_max_damage_id)
                     async with http_client.post(
                             url=f"https://api-clicker.pixelverse.xyz/api/pets/user-pets/{pet_with_max_damage_id}"
                                 f"/select") as resp:
@@ -478,9 +485,8 @@ class Tapper:
                                         f"<light-yellow>{self.session_name}</light-yellow> | <red>Unable to"
                                         f" fetch info for pet ID {pet_id}</red>"
                                     )
-                                await asyncio.sleep(1)  # Slight delay to avoid overwhelming the server
+                                await asyncio.sleep(1)
 
-                            # Sort pets by energy in descending order
                             pets_info.sort(key=lambda x: x['energy'], reverse=True)
 
                             for pet_info in pets_info:
@@ -529,33 +535,33 @@ class Tapper:
 
                 if settings.AUTO_BATTLE is True:
                     status = await self.select_most_damage_pet(http_client=http_client)
-                    if status:
-
-                        if settings.BATTLE_METHOD == 1:
-                            battle_tasks = []
-                            for _ in range(settings.BATTLES_COUNT):
-                                battle_tasks.append(self.battle(http_client=http_client,
-                                                                secret_sha256=access_secret,
-                                                                userid=self.user_id,
-                                                                initdata=init_data))
-
-                            await asyncio.gather(*battle_tasks)
-
-                        elif settings.BATTLE_METHOD == 2:
-                            battles = 0
-                            while True:
-                                await self.battle(http_client=http_client,
-                                                  secret_sha256=access_secret,
-                                                  userid=self.user_id,
-                                                  initdata=init_data)
-                                battles += 1
-                                if battles == settings.BATTLES_COUNT:
-                                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
-                                                f"Reached battles count")
-                                    break
-                                else:
-                                    await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
-                                                                       b=settings.DELAY_BETWEEN_BATTLES[1]))
+                    #if status:
+#
+                    #    if settings.BATTLE_METHOD == 1:
+                    #        battle_tasks = []
+                    #        for _ in range(settings.BATTLES_COUNT):
+                    #            battle_tasks.append(self.battle(http_client=http_client,
+                    #                                            secret_sha256=access_secret,
+                    #                                            userid=self.user_id,
+                    #                                            initdata=init_data))
+#
+                    #        await asyncio.gather(*battle_tasks)
+#
+                    #    elif settings.BATTLE_METHOD == 2:
+                    #        battles = 0
+                    #        while True:
+                    #            await self.battle(http_client=http_client,
+                    #                              secret_sha256=access_secret,
+                    #                              userid=self.user_id,
+                    #                              initdata=init_data)
+                    #            battles += 1
+                    #            if battles == settings.BATTLES_COUNT:
+                    #                logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                    #                            f"Reached battles count")
+                    #                break
+                    #            else:
+                    #                await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
+                    #                                                   b=settings.DELAY_BETWEEN_BATTLES[1]))
 
                 logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Going sleep 1 hour")
 
@@ -564,9 +570,6 @@ class Tapper:
             except InvalidSession as error:
                 raise error
 
-            except Exception as error:
-                logger.error(f"{self.session_name} | Unknown error: {error}")
-                await asyncio.sleep(delay=3)
 
 
 async def run_tapper(tg_client: Client, proxy: str | None):

@@ -39,6 +39,7 @@
 | **CLICK_COOLDOWN**        |                   Click cooldown in battles (default - [0.085, 0.09) ((i recommend those numbers))                    |
 | **BATTLES_COUNT**         |                                 How much battles to do before sleeping (default - 10)                                 |
 | **BATTLE_METHOD**         | Choose method for battles, 1 - run all battles at once (higher lose chance), 2 - run battles by queue ((default - 2)) |
+| **PET_NAME**              |    Choose yourself with what pet you will fight in battles OR bot will auto select best damage pet (default None)     |
 | **USE_PROXY_FROM_FILE**   |                     Whether to use a proxy from the `bot/config/proxies.txt` file (True / False)                      |
 
 ## Quick Start 📚

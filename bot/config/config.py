@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     BATTLES_COUNT: int = 10
     BATTLE_METHOD: int = 2
     PET_NAME: str = 'null'
+    MAX_PET_LVL: int = 0
    
     USE_PROXY_FROM_FILE: bool = False
 

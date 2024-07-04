@@ -294,7 +294,6 @@ class Tapper:
                     user_pet_stats = user_pet.get('stats', [])
 
                     if settings.PET_NAME == 'null':
-                        print('1')
                         for stat in user_pet_stats:
                             if stat.get('petsStat', {}).get('name') == 'MAX_ENERGY':
                                 current_damage = stat.get('currentValue')
@@ -303,12 +302,10 @@ class Tapper:
                                     pet_with_max_damage_id = user_pet_id
 
                     else:
-                        print('2')
                         if item.get('name') == settings.PET_NAME:
                             pet_with_max_damage_id = user_pet_id
 
                 if pet_with_max_damage_id:
-                    print(pet_with_max_damage_id)
                     async with http_client.post(
                             url=f"https://api-clicker.pixelverse.xyz/api/pets/user-pets/{pet_with_max_damage_id}"
                                 f"/select") as resp:

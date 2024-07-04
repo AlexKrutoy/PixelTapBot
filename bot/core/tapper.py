@@ -477,7 +477,6 @@ class Tapper:
                             pets_info = []
                             for pet_id in pet_ids:
                                 pet_info = await self.get_pet_info(http_client=http_client, pet_id=pet_id)
-                                print(pet_info)
                                 if pet_info:
                                     pets_info.append(pet_info)
                                 else:

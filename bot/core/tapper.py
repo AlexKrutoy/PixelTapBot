@@ -577,6 +577,10 @@ class Tapper:
             except InvalidSession as error:
                 raise error
 
+            except Exception as error:
+                logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Unknown error: {error}")
+                await asyncio.sleep(delay=3)
+
 
 
 async def run_tapper(tg_client: Client, proxy: str | None):

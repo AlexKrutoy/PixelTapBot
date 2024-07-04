@@ -532,33 +532,33 @@ class Tapper:
 
                 if settings.AUTO_BATTLE is True:
                     status = await self.select_most_damage_pet(http_client=http_client)
-                    #if status:
-#
-                    #    if settings.BATTLE_METHOD == 1:
-                    #        battle_tasks = []
-                    #        for _ in range(settings.BATTLES_COUNT):
-                    #            battle_tasks.append(self.battle(http_client=http_client,
-                    #                                            secret_sha256=access_secret,
-                    #                                            userid=self.user_id,
-                    #                                            initdata=init_data))
-#
-                    #        await asyncio.gather(*battle_tasks)
-#
-                    #    elif settings.BATTLE_METHOD == 2:
-                    #        battles = 0
-                    #        while True:
-                    #            await self.battle(http_client=http_client,
-                    #                              secret_sha256=access_secret,
-                    #                              userid=self.user_id,
-                    #                              initdata=init_data)
-                    #            battles += 1
-                    #            if battles == settings.BATTLES_COUNT:
-                    #                logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
-                    #                            f"Reached battles count")
-                    #                break
-                    #            else:
-                    #                await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
-                    #                                                   b=settings.DELAY_BETWEEN_BATTLES[1]))
+                    if status:
+
+                        if settings.BATTLE_METHOD == 1:
+                            battle_tasks = []
+                            for _ in range(settings.BATTLES_COUNT):
+                                battle_tasks.append(self.battle(http_client=http_client,
+                                                                secret_sha256=access_secret,
+                                                                userid=self.user_id,
+                                                                initdata=init_data))
+
+                            await asyncio.gather(*battle_tasks)
+
+                        elif settings.BATTLE_METHOD == 2:
+                            battles = 0
+                            while True:
+                                await self.battle(http_client=http_client,
+                                                  secret_sha256=access_secret,
+                                                  userid=self.user_id,
+                                                  initdata=init_data)
+                                battles += 1
+                                if battles == settings.BATTLES_COUNT:
+                                    logger.info(f"<light-yellow>{self.session_name}</light-yellow> | "
+                                                f"Reached battles count")
+                                    break
+                                else:
+                                    await asyncio.sleep(random.randint(a=settings.DELAY_BETWEEN_BATTLES[0],
+                                                                       b=settings.DELAY_BETWEEN_BATTLES[1]))
 
                 logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Going sleep 1 hour")
 

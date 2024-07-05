@@ -508,7 +508,7 @@ class Tapper:
                                         elif lvl == settings.MAX_PET_LVL:
                                             logger.warning(
                                                 f"<light-yellow>{self.session_name}</light-yellow> | Reached max pet "
-                                                f"lvl - {pet_name}. Balance: <green>{int(balance)}"
+                                                f"lvl - {pet_name}. Balance: <green>{int(balance)}</green>"
                                             )
                                             break
                                         else:

@@ -58,7 +58,7 @@ class Tapper:
                     start_command_found = False
 
                     async for message in self.tg_client.get_chat_history('pixelversexyzbot'):
-                        if message.text.startswith('/start'):
+                        if (message.text and message.text.startswith('/start')) or (message.caption and message.caption.startswith('/start')):
                             start_command_found = True
                             break
 

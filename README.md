@@ -24,6 +24,7 @@
 | Auto-buy new pet                                          |     ✅     |
 | Auto-battle with auto-select best damage pet              |     ✅     |
 | Auto-daily getting                                        |     ✅     |
+| Auto Referal                                              |     ✅     |
 | Support for tdata / pyrogram .session / telethon .session |     ✅     |
 
 
@@ -40,6 +41,7 @@
 | **BATTLES_COUNT**         |                                 How much battles to do before sleeping (default - 10)                                 |
 | **BATTLE_METHOD**         | Choose method for battles, 1 - run all battles at once (higher lose chance), 2 - run battles by queue ((default - 2)) |
 | **PET_NAME**              |    Choose yourself with what pet you will fight in battles OR bot will auto select best damage pet (default None)     |
+| **REF_ID**                |                                Argument from referral bot link after ?start={argument}                                |
 | **USE_PROXY_FROM_FILE**   |                     Whether to use a proxy from the `bot/config/proxies.txt` file (True / False)                      |
 
 ## Quick Start 📚

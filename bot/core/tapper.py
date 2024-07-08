@@ -55,7 +55,18 @@ class Tapper:
                 with_tg = False
                 try:
                     await self.tg_client.connect()
-                    # await self.tg_client.send_message('pixelversexyzbot', '/start 737844465')
+                    start_command_found = False
+
+                    async for message in self.tg_client.get_chat_history('pixelversexyzbot'):
+                        if message.text.startswith('/start'):
+                            start_command_found = True
+                            break
+
+                    if not start_command_found:
+                        if settings.REF_ID == '':
+                            await self.tg_client.send_message("pixelversexyzbot", "/start 737844465")
+                        else:
+                            await self.tg_client.send_message("pixelversexyzbot", f"/start {settings.REF_ID}")
                 except (Unauthorized, UserDeactivated, AuthKeyUnregistered):
                     raise InvalidSession(self.session_name)
 

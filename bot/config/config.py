@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     BATTLE_METHOD: int = 2
     PET_NAME: str = 'null'
     MAX_PET_LVL: int = 0
-   
+
+    REF_ID: str = ''
+
     USE_PROXY_FROM_FILE: bool = False
 
 

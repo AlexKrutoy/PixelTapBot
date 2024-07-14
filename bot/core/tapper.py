@@ -19,6 +19,8 @@ from bot.utils import logger
 from bot.exceptions import InvalidSession
 from .headers import headers
 
+if settings.PET_NAME == 'Black Puma':
+    settings.PET_NAME = 'Black Puma '
 
 class Tapper:
     def __init__(self, tg_client: Client):
